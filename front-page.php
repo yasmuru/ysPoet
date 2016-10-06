@@ -20,11 +20,20 @@ get_header(); ?>
 	<main id="main" class="site-main" role="main">
 
 		<?php
-			$args = array(
-				'post_type' => 'post',
-				'post_per_page' => 5,
-			);
-			$posts = new WP_Query($args);
+		if ( get_query_var( 'paged' ) ) {
+			$paged = get_query_var( 'paged' );
+		} elseif ( get_query_var( 'page' ) ) {
+			$paged = get_query_var( 'page' );
+		} else {
+			$paged = 1;
+		}
+
+		$args = array(
+			'post_type' => 'post',
+			'posts_per_page' => 5,
+			'paged' => $paged
+		);
+		$posts = new WP_Query($args);
 		?>
 
 	<?php if ( $posts->have_posts() ) : ?>
