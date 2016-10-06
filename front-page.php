@@ -19,9 +19,17 @@ get_header(); ?>
 
 	<main id="main" class="site-main" role="main">
 
-	<?php if ( have_posts() ) : ?>
+		<?php
+			$args = array(
+				'post_type' => 'post',
+				'post_per_page' => 5,
+			);
+			$posts = new WP_Query($args);
+		?>
 
-		<?php while ( have_posts() ) : the_post(); ?>
+	<?php if ( $posts->have_posts() ) : ?>
+
+		<?php while ( $posts->have_posts() ) : $posts->the_post(); ?>
 
 			<?php get_template_part( 'content', get_post_format() ); ?>
 
