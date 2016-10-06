@@ -44,7 +44,7 @@ get_header(); ?>
 
 		<?php endwhile; ?>
 
-		<?php ysPoet_paging_nav(); ?>
+		<?php ysPoet_custom_pagination($posts->max_num_pages,"",$paged); ?>
 
 	<?php else : ?>
 

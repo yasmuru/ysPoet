@@ -366,7 +366,7 @@ function ysPoet_scripts() {
 	$stylesheet = get_stylesheet();
 	$suffix     = SCRIPT_DEBUG ? '' : '.min';
 
-	wp_enqueue_style( $stylesheet, get_stylesheet_uri(), false, defined( 'ysPoet_CHILD_VERSION' ) ? ysPoet_CHILD_VERSION : ysPoet_VERSION );
+	wp_enqueue_style( $stylesheet, get_template_directory_uri() . '/assets/css/style.min.css', false, defined( 'ysPoet_CHILD_VERSION' ) ? ysPoet_CHILD_VERSION : ysPoet_VERSION );
 
 	wp_style_add_data( $stylesheet, 'rtl', 'replace' );
 
