@@ -354,6 +354,45 @@ function ysPoet_register_sidebars() {
 }
 add_action( 'widgets_init', 'ysPoet_register_sidebars' );
 
+function ysPoet_register_post_types() {
+	$labels = array(
+		'name'               => _x( 'Quotes', 'post type general name', 'ysPoet' ),
+		'singular_name'      => _x( 'Quote', 'post type singular name', 'ysPoet' ),
+		'menu_name'          => _x( 'Quotes', 'admin menu', 'ysPoet' ),
+		'name_admin_bar'     => _x( 'Quote', 'add new on admin bar', 'ysPoet' ),
+		'add_new'            => _x( 'Add New', 'quote', 'ysPoet' ),
+		'add_new_item'       => __( 'Add New quote', 'ysPoet' ),
+		'new_item'           => __( 'New quote', 'ysPoet' ),
+		'edit_item'          => __( 'Edit quote', 'ysPoet' ),
+		'view_item'          => __( 'View quote', 'ysPoet' ),
+		'all_items'          => __( 'All Quotes', 'ysPoet' ),
+		'search_items'       => __( 'Search Quotes', 'ysPoet' ),
+		'parent_item_colon'  => __( 'Parent Quotes:', 'ysPoet' ),
+		'not_found'          => __( 'No Quotes found.', 'ysPoet' ),
+		'not_found_in_trash' => __( 'No Quotes found in Trash.', 'ysPoet' )
+	);
+
+	$args = array(
+		'labels'             => $labels,
+        'description'        => __( 'Quotes which inspired', 'ysPoet' ),
+		'public'             => true,
+		'publicly_queryable' => true,
+		'show_ui'            => true,
+		'show_in_menu'       => true,
+		'query_var'          => true,
+		'rewrite'            => array( 'slug' => 'quote' ),
+		'capability_type'    => 'post',
+		'has_archive'        => true,
+		'hierarchical'       => false,
+		// 'menu_position'      => ,
+		'supports'           => array( 'editor', 'thumbnail' ),
+		'register_meta_box_cb' => 'ysPoet_custom_meta_box',
+	);
+
+	register_post_type( 'quote', $args );
+}
+add_action('init', 'ysPoet_register_post_types');
+
 /**
  * Enqueue theme scripts and styles.
  *
@@ -366,7 +405,7 @@ function ysPoet_scripts() {
 	$stylesheet = get_stylesheet();
 	$suffix     = SCRIPT_DEBUG ? '' : '.min';
 
-	wp_enqueue_style( $stylesheet, get_template_directory_uri() . '/assets/css/style.min.css', false, defined( 'ysPoet_CHILD_VERSION' ) ? ysPoet_CHILD_VERSION : ysPoet_VERSION );
+	wp_enqueue_style( $stylesheet, get_template_directory_uri() . '/assets/css/style.min.css', false, '1.0.0' );
 
 	wp_style_add_data( $stylesheet, 'rtl', 'replace' );
 
@@ -442,3 +481,92 @@ add_action( 'create_category', 'ysPoet_has_active_categories_reset' );
 add_action( 'edit_category',   'ysPoet_has_active_categories_reset' );
 add_action( 'delete_category', 'ysPoet_has_active_categories_reset' );
 add_action( 'save_post',       'ysPoet_has_active_categories_reset' );
+
+/**
+ * Adds custom meta boxes.
+ *
+ * @since  1.0
+ * 
+ * @return void.
+ */
+function ysPoet_custom_meta_box(){
+	add_meta_box( 'quote-author', 'Quote Author', 'ysPoet_quote_meta_details', 'quote', 'normal', 'default' );
+}
+add_action( 'add_meta_boxes', 'ysPoet_custom_meta_box' );
+
+/**
+ * Display color meta box in post edit page.
+ *
+ * @since  1.0
+ * 
+ * @param   $post Current post.
+ * 
+ * @return void.
+ */
+function ysPoet_quote_meta_details( $post ){
+
+  wp_nonce_field( 'quote_author_meta_box', 'quote_author_meta_box_nonce' );
+
+  $value = get_post_meta( $post->ID, '_quote_author', true );
+  echo '<table class="form-table">
+          <tr valign="top">
+          <th><label for="author_name">';
+  _e( 'Quote author', 'jf' );
+  echo '</label></th> ';
+  echo '<td><input type="text" id="quote_author" name="quote_author" value="' . $value . '" />
+      </td></tr></table>';
+ 
+}
+
+/**
+ * Saves color meta box value.
+ *
+ * @since  1.0
+ * 
+ * @param  int $post_id current post id.
+ * 
+ * @return true if data saved.
+ */
+function ysPoet_save_quote_meta($post_id){
+
+  // Check if our nonce is set.
+  if ( ! isset( $_POST['quote_author_meta_box_nonce'] ) ) {
+    return;
+  }
+  // Verify that the nonce is valid.
+  if ( ! wp_verify_nonce( $_POST['quote_author_meta_box_nonce'], 'quote_author_meta_box' ) ) {
+    return;
+  }
+
+  // If this is an autosave, our form has not been submitted, so we don't want to do anything.
+  if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+    return;
+  }
+
+  // Check the user's permissions.
+  if ( isset( $_POST['quote'] ) && 'page' == $_POST['quote'] ) {
+
+    if ( ! current_user_can( 'edit_page', $post_id ) ) {
+      return;
+    }
+
+  } else {
+
+    if ( ! current_user_can( 'edit_post', $post_id ) ) {
+      return;
+    }
+  }
+
+  // Make sure that it is set.
+  if ( ! isset( $_POST['quote_author'] ) ) {
+    return;
+  }
+
+  // Sanitize user input.
+ // $hex_color = sanitize_text_field( $_POST['form_back_color'] );
+  $hex_color = $_POST['quote_author'];
+
+  // Update the meta field in the database.
+  update_post_meta( $post_id, '_quote_author', $hex_color );
+}
+add_action( 'save_post', 'ysPoet_save_quote_meta' );
